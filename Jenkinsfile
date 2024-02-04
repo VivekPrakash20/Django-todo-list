@@ -1,39 +1,34 @@
 pipeline {
-    agent any
+    agent any 
     
-    stages {
-        
-        stage("code"){
-            steps{
-                git url: "https://github.com/VivekPrakash20/Django-todo-list.git"
-                echo 'code clone '
+    stages{
+        stage("Clone Code"){
+            steps {
+                echo "Cloning the code"
+                git url:"https://github.com/VivekPrakash20/Django-todo-list"
             }
         }
-        stage("build and test"){
-            steps{
-                sh "docker build -t node-app-test-new ."
-                echo 'code build '
+        stage("Build"){
+            steps {
+                echo "Building the image"
+                sh "docker build -t my-note-app ."
             }
         }
-        stage("scan image"){
-            steps{
-                echo 'image scanning'
-            }
-        }
-        stage("push"){
-            steps{
+        stage("Push to Docker Hub"){
+            steps {
+                echo "Pushing the image to docker hub"
                 withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
+                sh "docker tag my-note-app ${env.dockerHubUser}/my-note-app:latest"
                 sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                sh "docker tag node-app-test-new:latest ${env.dockerHubUser}/node-app-test-new:latest"
-                sh "docker push ${env.dockerHubUser}/node-app-test-new:latest"
-                echo 'image push '
+                sh "docker push ${env.dockerHubUser}/my-note-app:latest"
                 }
             }
         }
-        stage("deploy"){
-            steps{
+        stage("Deploy"){
+            steps {
+                echo "Deploying the container"
                 sh "docker-compose down && docker-compose up -d"
-                echo 'deployment'
+                
             }
         }
     }
